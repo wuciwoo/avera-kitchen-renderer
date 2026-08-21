@@ -24,6 +24,7 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  html{ overflow-x:hidden; }
   body{
     background:
       radial-gradient(ellipse at top left, #FBF8F1 0%, var(--bg) 60%);
@@ -31,8 +32,9 @@
     font-family:'Inter',sans-serif;
     min-height:100vh;
     padding:28px 20px 60px;
+    overflow-x:hidden;
   }
-  .wrap{max-width:1180px;margin:0 auto;}
+  .wrap{max-width:1180px;margin:0 auto; width:100%;}
 
   /* ---------- header ---------- */
   header{
@@ -73,7 +75,7 @@
     grid-template-columns: 1fr;
     gap:22px;
   }
-  @media(min-width:960px){
+  @media(min-width:1000px){
     .grid{ grid-template-columns: 380px 1fr; align-items:start; }
   }
 
@@ -171,7 +173,7 @@
   .style-card .title-input:focus{outline:none; border-bottom-color:var(--brass-dim); box-shadow:none;}
   .style-thumb{
     height:84px; border:1px dashed var(--line); border-radius:var(--radius);
-    position:relative; cursor:pointer; overflow:hidden;
+    position:relative; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
     background:var(--bg-panel);
   }
@@ -180,7 +182,15 @@
   .style-thumb .hint{
     font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); text-align:center; padding:4px;
   }
-  .style-thumb input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+  .thumb-edit-btn{
+    position:absolute; bottom:6px; right:6px; z-index:2;
+    width:24px; height:24px; border-radius:50%;
+    background:rgba(251,248,241,0.92); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; line-height:1; cursor:pointer; color:var(--text-dim);
+  }
+  .thumb-edit-btn:hover{border-color:var(--brass-dim); color:var(--brass);}
+  .thumb-edit-btn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
   .style-card textarea.kw{
     min-height:70px; font-size:11.5px; line-height:1.5;
     font-family:'IBM Plex Mono',monospace;
@@ -204,7 +214,7 @@
   }
   .cabinet-thumb{
     height:120px; border:1px dashed var(--line); border-radius:var(--radius);
-    position:relative; cursor:pointer; overflow:hidden;
+    position:relative; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
     background:var(--bg-panel);
   }
@@ -212,11 +222,6 @@
   .cabinet-thumb img{width:100%; height:100%; object-fit:cover;}
   .cabinet-thumb .hint{
     font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text-faint); text-align:center; padding:4px;
-  }
-  .cabinet-thumb input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
-  .cabinet-card textarea.dims{
-    min-height:96px; font-size:12px; line-height:1.55;
-    font-family:'IBM Plex Mono',monospace;
   }
   .apply-style-btn{
     background:none; border:1px solid var(--line); color:var(--text-dim);
@@ -270,7 +275,9 @@
     display:flex; flex-direction:column;
   }
   .compare-frame{
-    flex:1; min-height:340px;
+    width:100%;
+    aspect-ratio: 4 / 3; /* default until an image sets its own ratio */
+    min-height:220px; max-height:640px;
     position:relative;
     background:var(--bg-raised);
     border:1px solid var(--line-soft);
@@ -306,7 +313,7 @@
     pointer-events:none;
   }
   .compare-handle::after{
-    content:'\\21c6';
+    content:'\21c6';
     position:absolute; top:50%; left:50%;
     transform:translate(-50%,-50%);
     width:30px; height:30px; border-radius:50%;
@@ -472,7 +479,7 @@
 
     <!-- RIGHT: preview -->
     <div class="panel preview-panel">
-      <p class="panel-title">04 · Output</p>
+      <p class="panel-title">04 · Output &amp; Estimate</p>
 
       <div class="compare-frame" id="compareFrame">
         <div class="compare-layer compare-before" id="beforeLayer">
@@ -486,11 +493,20 @@
         <span class="frame-label frame-label-right">Result</span>
       </div>
 
-      <button class="generate-btn" id="generateBtn" style="margin-top:16px;">Generate</button>
+      <button class="generate-btn" id="generateBtn" style="margin-top:16px;">Render &amp; Estimate</button>
 
       <div class="preview-footer">
         <span class="meta" id="metaInfo">&nbsp;</span>
         <button class="download-btn" id="downloadBtn" disabled>Download PNG</button>
+      </div>
+
+      <div id="estimateBox" style="margin-top:14px; padding:14px; background:var(--bg-raised); border:1px solid var(--line-soft); border-radius:var(--radius); display:none;">
+        <div id="estBreakdown" style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-dim); line-height:1.8;"></div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft);">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint);">Estimated range</div>
+          <div id="estTotal" style="font-family:'Fraunces',serif; font-size:24px; color:var(--text); margin-top:4px;">$0</div>
+        </div>
+        <div class="note" style="margin-top:8px;">Visual estimate from the photo, cabinets + shipping + overhead. Not countertops, appliances, labor, or a formal quote.</div>
       </div>
 
       <div class="error-box" id="errorBox"></div>
@@ -501,7 +517,7 @@
   <div class="panel" style="margin-top:18px;">
     <p class="panel-title">05 &middot; Cabinet Types &amp; Sizing</p>
     <div id="cabinetTypes" class="cabinet-grid"></div>
-    <div class="note">Generic industry-standard reference sizes &mdash; drop in your own reference photo per type and adjust the dimensions to Avera's actual spec sheet. Purely for reference; not sent to the model.</div>
+    <div class="note">Runs off the same photo you upload in 01 — click "Render &amp; Estimate" in 04 and the linear footage detected for each of these four types fills in here.</div>
   </div>
 
 </div>
@@ -623,7 +639,10 @@
         <input type="text" class="title-input" placeholder="Style name, e.g. Classical" value="${preset.title || ''}">
         <div class="style-thumb" data-idx="${i}">
           ${thumbInner}
-          <input type="file" accept="image/*">
+          <label class="thumb-edit-btn" title="Replace photo">
+            &#9998;
+            <input type="file" accept="image/*">
+          </label>
         </div>
         <button class="apply-style-btn" data-idx="${i}">${activeStyleIndex === i ? '✓ Applied' : 'Apply this style'}</button>
       `;
@@ -681,26 +700,10 @@
   const BASE_CORNER_THUMB = 'data:image/jpeg;base64,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7x/lTLPrJ9BT9b6wf7x/lTLPrJ9BSA0bT7n41ZblY19ZV/rVa2/1Z+tWsfLb/wDXUf1oAsUlLSVQDabTqbmgBHOBW7pn/Hkn1P8AM1gv0re0z/jzj/3aALNFFFABRRRQAUUUUAFFFFABVbUOIg3oas1W1H/j3+jZoAoUUlFABRRRQAUxulOzTW6UARS/6tvSobb/AI8of9yppv8AVMPWoLX/AI8of92gAk61Uuv+Pi2/3z/6CatydaqXX+vtv98/+gmpApax1g/3m/8AQTTLb7z/AIU/WOsH+83/AKCaZan5n/CgDStf9WfrVqX7lt/11/oaq2v+r/GrU33Lb/rr/Q0ATU09KdTT0qgGmo8mnnio6AFcjiuhsB/ocXH8ANc2xrprEYtIv9wCgCaiiigAooooAKKKKACiiigAqtqP/Hsas1FeIZLZ1XrigDLopp3ByjoysPWigAoplFAC5NNPSkooAbJ901DZf8ecdSv9w1DY/wDHnH+NACyVRvT/AKTa/wC+3/oDVauGcMMbQvclc1WMQEiylmZx3J/zigClrXLQH/ab/wBBNMs/vuPYUmsNgwf7zfyNLaKjMdyK3pkVIGrbfcqxNy1qn+3n9DUFsPkqaU4uLb/eP8jQBNTaKSqAY/WmtQ1NagBK6uEfuk+grnbGwnuPmZfKjP8AE3f8K6UcDAoAKKKKACiiigAooooAKKKKACiiigBskaSLtdQRVOax7xt+Bq9RQBiSxvGcMMUytx0VxhgCKqTadERmL5GoAzKRjipZ7eSE/OOPWoGFACO2Y2+lQWRxbqPc/wAzUrf6tvpWcZJ0i8oSkJnoKALNxMiH5zjNZ11fkqUjGM96aInkJEY3P2HrWjY+H55sSzsIV/ukZP5UActOrtKZJJXdz1JNQG61XT5ts0LRg8qJYyNw9RmvUdM0yzsF/cQjcernlj+NW7mCG5hMU8ayI3UMM0Aefadr1rIAkgMT+54/OtC4v7VZoX80FRnO3nHGK0tQ8H6bcZNuXtmPp8y/kTWFdeGtQtC22ISRr/GnP6daANGwuDNC0hOcyNtHovap93tVXRoHeFUQZyeTXQ2ulRI4ec+YR0XHH4+tAGVb281zJsiXOOpPQVr2mmQQOZGAkkPViKvqAoAAAA7CigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACql1Ywzcj5D6gVbooA526tpLfIcggjgjvUen6cl9vDyMirjO3qc579q6R0V12sAw9CKVVCjCgAUAVrWytrZdsMYX37mrAFLijFACgYooooAKKKKAAADoKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//Z';
 
   const cabinetTypes = [
-    {
-      name: 'Wall Cabinet',
-      dims: 'Height: 12", 15", 18", 24", 30", 36", 42"\nDepth: 12"–13"\nWidth: 9"–48" (3" steps)\nMounted ~54" above finished floor',
-      thumb: WALL_CABINET_THUMB
-    },
-    {
-      name: 'Wall Cabinet Corner',
-      dims: 'Width: 24"–36" (diagonal or blind corner)\nDepth: 12"–24" at the corner\nHeight: matches adjoining wall cabinets\nDiagonal front face ~24"x24"',
-      thumb: WALL_CORNER_THUMB
-    },
-    {
-      name: 'Base Cabinet',
-      dims: 'Height: 34.5" (36" with countertop)\nDepth: 24"\nWidth: 9"–48" (3" steps)',
-      thumb: BASE_CABINET_THUMB
-    },
-    {
-      name: 'Base Cabinet Corner',
-      dims: 'Width: 36"–39" (Lazy Susan or blind corner)\nDepth: 24"\nHeight: 34.5" (36" with countertop)\nLazy Susan diameter ~28"–32"',
-      thumb: BASE_CORNER_THUMB
-    }
+    { key: 'wall_cabinet_lf', name: 'Wall Cabinet', detectedLF: null, thumb: WALL_CABINET_THUMB },
+    { key: 'wall_corner_lf', name: 'Wall Corner', detectedLF: null, thumb: WALL_CORNER_THUMB },
+    { key: 'base_cabinet_lf', name: 'Base Cabinet', detectedLF: null, thumb: BASE_CABINET_THUMB },
+    { key: 'base_corner_lf', name: 'Base Corner', detectedLF: null, thumb: BASE_CORNER_THUMB }
   ];
   const cabinetTypesEl = $('cabinetTypes');
 
@@ -714,13 +717,20 @@
         ? `<img src="${c.thumb}" alt="${c.name}" draggable="false">`
         : `<div class="hint">Drop reference<br>photo (optional)</div>`;
 
+      const lfDisplay = c.detectedLF === null
+        ? `<span style="color:var(--text-faint);">Not analyzed yet</span>`
+        : `<span style="color:var(--text);">${c.detectedLF} LF</span> <span style="color:var(--text-faint);">in this photo</span>`;
+
       card.innerHTML = `
-        <p class="cabinet-title">${c.name}</p>
+        <p class="cabinet-title" style="margin:0;">${c.name}</p>
         <div class="cabinet-thumb" data-idx="${i}">
           ${thumbInner}
-          <input type="file" accept="image/*">
+          <label class="thumb-edit-btn" title="Replace photo">
+            &#9998;
+            <input type="file" accept="image/*">
+          </label>
         </div>
-        <textarea class="dims" spellcheck="false">${c.dims}</textarea>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; text-align:center; padding:4px 0;">${lfDisplay}</div>
       `;
 
       const thumb = card.querySelector('.cabinet-thumb');
@@ -731,10 +741,6 @@
       thumb.addEventListener('drop', (e) => {
         const f = e.dataTransfer.files[0];
         if(f) handleCabinetThumb(i, f);
-      });
-
-      card.querySelector('textarea.dims').addEventListener('input', (e) => {
-        cabinetTypes[i].dims = e.target.value;
       });
 
       cabinetTypesEl.appendChild(card);
@@ -783,7 +789,19 @@
       const base64 = dataUrl.split(',')[1];
       uploadedFile = { base64, mimeType: file.type, dataUrl };
       beforeLayer.innerHTML = `<img src="${dataUrl}" alt="input" draggable="false">`;
-      dzContent.innerHTML = `<div class="hint" style="color:var(--brass);">Selected: ${file.name}</div><div class="hint">Click to choose a different file</div>`;
+      dzContent.innerHTML = `
+        <img src="${dataUrl}" alt="input preview" draggable="false" style="max-height:160px; max-width:100%; border-radius:var(--radius); display:block; margin:0 auto 10px; object-fit:contain;">
+        <div class="hint" style="color:var(--brass);">${file.name}</div>
+        <div class="hint">Click to choose a different file</div>
+      `;
+
+      const probe = new Image();
+      probe.onload = () => {
+        if(probe.naturalWidth && probe.naturalHeight){
+          compareFrame.style.aspectRatio = `${probe.naturalWidth} / ${probe.naturalHeight}`;
+        }
+      };
+      probe.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
@@ -850,7 +868,96 @@ ${overall}
     errorBox.textContent = '';
   }
 
-  // ---------- generate ----------
+  // ---------- internal per-style rates ($/linear ft — never shown in the UI) ----------
+  // Ballpark 2026 US market rates for semi-custom/custom cabinetry matching each
+  // style's material & hardware spec (shaker vs handleless high-gloss vs crown-molding
+  // traditional). Corner rates carry a ~40% premium/LF for the extra joinery/hardware.
+  // Adjust these to Avera's real pricing whenever you have it.
+  const STYLE_RATES = {
+    Classical: { wall_cabinet_lf: 300, wall_corner_lf: 420, base_cabinet_lf: 400, base_corner_lf: 560 },
+    Modern:    { wall_cabinet_lf: 340, wall_corner_lf: 475, base_cabinet_lf: 450, base_corner_lf: 630 },
+    Nature:    { wall_cabinet_lf: 285, wall_corner_lf: 400, base_cabinet_lf: 380, base_corner_lf: 530 },
+    American:  { wall_cabinet_lf: 360, wall_corner_lf: 505, base_cabinet_lf: 480, base_corner_lf: 670 }
+  };
+  const DEFAULT_RATES = STYLE_RATES.Classical;
+  const ESTIMATE_MODEL = 'gemini-3.7-flash';
+  // cabinets-only material cost -> all-in range, to cover shipping, freight, and overhead/operations
+  const RANGE_MULTIPLIER_LOW = 1.5;
+  const RANGE_MULTIPLIER_HIGH = 2.5;
+
+  const estimateBox = $('estimateBox');
+  const estBreakdown = $('estBreakdown');
+  const estTotal = $('estTotal');
+
+  function money(n){
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function currentStyleRates(){
+    const title = (activeStyleIndex !== null && stylePresets[activeStyleIndex]) ? stylePresets[activeStyleIndex].title : null;
+    return (title && STYLE_RATES[title]) ? STYLE_RATES[title] : DEFAULT_RATES;
+  }
+
+  async function runEstimate(apiKey){
+    const rates = currentStyleRates();
+    const prompt =
+`You are a professional kitchen cabinet estimator. Look at this kitchen photo and estimate the linear feet of each cabinet type present.
+
+Scan every cabinet run in the photo and classify each one:
+- wall_cabinet_lf / base_cabinet_lf: ordinary straight-front cabinet runs.
+- wall_corner_lf / base_corner_lf: a single cabinet at an L-shaped intersection whose front is visibly angled or diagonal relative to the two adjoining runs — the door/face doesn't sit flush in line with either straight run, it cuts across the corner instead. This includes lazy-susan units, diagonal-front corner cabinets, and blind-corner units with a noticeably wider/angled opening. Count it whenever you can see this angled front, even if the door itself is plain — the giveaway is the angled BOX/opening at the corner, not the door style. Look carefully at both the wall-cabinet run and the base-cabinet run independently; a kitchen can have a corner unit in one and not the other.
+- Only score corner LF as 0 for a given run if the two cabinet sections truly just butt together at a plain 90° with no angled face or opening at all — don't default to 0 just because you're unsure; look for the angled front before deciding.
+
+Respond with ONLY raw JSON (no markdown, no code fences, no text outside the object). Fill "analysis" first with one short sentence describing what you see at each corner (wall and base), THEN fill in the numbers based on that:
+{"analysis": "<one short sentence>", "wall_cabinet_lf": <number>, "wall_corner_lf": <number>, "base_cabinet_lf": <number>, "base_corner_lf": <number>}`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(ESTIMATE_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: uploadedFile.mimeType, data: uploadedFile.base64 } }
+          ]
+        }],
+        generationConfig: { temperature: 0.2 }
+      })
+    });
+
+    const json = await resp.json();
+    if(!resp.ok){
+      const msg = (json && json.error && json.error.message) ? json.error.message : `HTTP ${resp.status}`;
+      throw new Error(msg);
+    }
+
+    const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const flatObjects = rawText.match(/\{[^{}]*\}/g);
+    const jsonMatch = flatObjects ? flatObjects[flatObjects.length - 1] : null;
+    if(!jsonMatch) throw new Error('The model didn\'t return parseable JSON.');
+    const parsed = JSON.parse(jsonMatch);
+
+    let rawTotal = 0;
+    cabinetTypes.forEach(c => {
+      const lf = Number(parsed[c.key]) || 0;
+      c.detectedLF = lf;
+      rawTotal += lf * (rates[c.key] || 0);
+    });
+    renderCabinetTypes();
+
+    const lowTotal = rawTotal * RANGE_MULTIPLIER_LOW;
+    const highTotal = rawTotal * RANGE_MULTIPLIER_HIGH;
+
+    estBreakdown.innerHTML = cabinetTypes.map(c =>
+      `<div style="display:flex; justify-content:space-between;"><span>${c.name}</span><span>${c.detectedLF} LF</span></div>`
+    ).join('');
+    estTotal.textContent = `${money(lowTotal)} – ${money(highTotal)}`;
+    estimateBox.style.display = 'block';
+  }
+
+  // ---------- generate (render + estimate, one click) ----------
   generateBtn.addEventListener('click', async () => {
     clearError();
     const apiKey = apiKeyEl.value.trim();
@@ -888,13 +995,13 @@ ${overall}
     };
 
     generateBtn.disabled = true;
-    generateBtn.innerHTML = `<span class="spinner"></span>Generating…`;
+    generateBtn.innerHTML = `<span class="spinner"></span>Rendering &amp; estimating…`;
     afterPlaceholder.textContent = 'Calling Gemini…';
     afterLayer.innerHTML = `<div class="placeholder">Calling Gemini…</div>`;
     downloadBtn.disabled = true;
     metaInfo.textContent = `model: ${model} · seed: ${seed}`;
 
-    try{
+    const renderCall = (async () => {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const resp = await fetch(url, {
         method: 'POST',
@@ -927,17 +1034,34 @@ ${overall}
 
       resultDataUrl = `data:${imgMime};base64,${imgB64}`;
       afterLayer.innerHTML = `<img src="${resultDataUrl}" alt="result" draggable="false">`;
+      const resultProbe = new Image();
+      resultProbe.onload = () => {
+        if(resultProbe.naturalWidth && resultProbe.naturalHeight){
+          compareFrame.style.aspectRatio = `${resultProbe.naturalWidth} / ${resultProbe.naturalHeight}`;
+        }
+      };
+      resultProbe.src = resultDataUrl;
       setReveal(50);
       downloadBtn.disabled = false;
       metaInfo.textContent = `model: ${model} · seed: ${seed} · ${new Date().toLocaleTimeString()}`;
+    })();
 
-    }catch(err){
-      showError('Generation failed: ' + err.message);
+    const estimateCall = runEstimate(apiKey);
+
+    const [renderResult, estimateResult] = await Promise.allSettled([renderCall, estimateCall]);
+
+    const errors = [];
+    if(renderResult.status === 'rejected'){
+      errors.push('Render failed: ' + renderResult.reason.message);
       afterLayer.innerHTML = `<div class="placeholder">Generation failed — see the error message below</div>`;
-    }finally{
-      generateBtn.disabled = false;
-      generateBtn.textContent = 'Generate';
     }
+    if(estimateResult.status === 'rejected'){
+      errors.push('Estimate failed: ' + estimateResult.reason.message);
+    }
+    if(errors.length) showError(errors.join(' · '));
+
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Render & Estimate';
   });
 
   downloadBtn.addEventListener('click', () => {
