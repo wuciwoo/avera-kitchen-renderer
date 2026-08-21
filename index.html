@@ -428,8 +428,13 @@
         <div class="note">Materials come from the style card you applied in 02 &mdash; this just picks the lighting/atmosphere on top of it.</div>
       </div>
 
-      <details class="adv">
+      <details class="adv" id="advSettings">
         <summary>Advanced settings</summary>
+        <div class="field">
+          <label for="apiKey">Gemini API Key</label>
+          <input type="password" id="apiKey" placeholder="AIzaSy...">
+          <div class="note">Only kept in this browser tab for this session — never written into the page's saved HTML, so it's safe even on a public repo. <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--cyan);">Get a key ↗</a></div>
+        </div>
         <div class="field">
           <label for="model">Model</label>
           <select id="model">
@@ -461,7 +466,6 @@
             <input type="number" id="temperature" value="0.05" step="0.01" min="0" max="1">
           </div>
         </div>
-        <div class="note" style="margin-top:10px;">The API key is built into this file. This is a static, front-end-only page, so the key sits in the page source as plain text — for your own use only. Don't share this html file or host it publicly.</div>
       </details>
 
     </div>
@@ -506,10 +510,8 @@
 (function(){
   const $ = (id) => document.getElementById(id);
 
-  // Personal-use tool: key is embedded directly, since this file has no backend.
-  // Anyone who opens this file's source can read it — keep this file private.
-  const HARDCODED_API_KEY = 'AIzaSyBvibEsOvDNkrLb7Xjj3hhcaf-kVfUduXY';
-
+  const apiKeyEl = $('apiKey');
+  const advSettings = $('advSettings');
   const modelEl = $('model');
   const modelCustomEl = $('modelCustom');
   const statusChip = $('statusChip');
@@ -528,12 +530,16 @@
   let uploadedFile = null;   // { base64, mimeType, dataUrl }
   let resultDataUrl = null;
 
+  // open Advanced settings by default so the key field is visible on load
+  advSettings.open = true;
+
   // ---------- status chip ----------
   function refreshStatus(){
-    const hasKey = HARDCODED_API_KEY.trim().length > 10;
+    const hasKey = apiKeyEl.value.trim().length > 10;
     statusChip.className = 'status-chip' + (hasKey ? ' ok' : '');
-    statusChip.querySelector('span:last-child').textContent = hasKey ? 'API key built in' : 'No API key configured';
+    statusChip.querySelector('span:last-child').textContent = hasKey ? 'API key entered' : 'Waiting for API key';
   }
+  apiKeyEl.addEventListener('input', refreshStatus);
 
   // ---------- model select ----------
   modelEl.addEventListener('change', () => {
@@ -847,10 +853,10 @@ ${overall}
   // ---------- generate ----------
   generateBtn.addEventListener('click', async () => {
     clearError();
-    const apiKey = HARDCODED_API_KEY.trim();
+    const apiKey = apiKeyEl.value.trim();
     const model = currentModel();
 
-    if(!apiKey){ showError('The built-in API key is empty — check HARDCODED_API_KEY in the code.'); return; }
+    if(!apiKey){ showError('Enter your Gemini API key in Advanced settings first.'); return; }
     if(!model){ showError('Pick or enter a model name.'); return; }
     if(!uploadedFile){ showError('Upload an input image first (viewport capture / colour-coded diagram / real photo).'); return; }
 
